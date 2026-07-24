@@ -5,6 +5,7 @@ services:
     image: nats:latest
     container_name: ms-logs-nats
     restart: always
+    command: ["-js"]
     ports:
       - "4222:4222" # NATS client port
       - "8222:8222" # NATS monitoring dashboard

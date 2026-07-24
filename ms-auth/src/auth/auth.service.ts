@@ -6,6 +6,8 @@ import {
 import { UsersService } from '../users/users.service';
 import { TokensService, JwtPayload } from '../tokens/tokens.service';
 import { TwoFactorService } from '../two-factor/two-factor.service';
+import { NatsJetStreamService } from '../common/nats/nats-jetstream.service';
+import { AUTH_SUBJECTS, UserRegisteredData, UserAuthenticatedData, UserLogoutData } from '@app/events';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -15,6 +17,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly tokensService: TokensService,
     private readonly twoFactorService: TwoFactorService,
+    private readonly natsJetStreamService: NatsJetStreamService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -25,6 +28,19 @@ export class AuthService {
     });
     // Remove password from response
     const { password, ...result } = user;
+
+    // Publish event: auth.user.registered
+    await this.natsJetStreamService.publishEvent<UserRegisteredData>(
+      AUTH_SUBJECTS.USER_REGISTERED,
+      {
+        userId: user.id,
+        email: user.email,
+        roles: user.roles,
+        registeredAt: user.createdAt?.toISOString() || new Date().toISOString(),
+      },
+      { userId: user.id },
+    );
+
     return result;
   }
 
@@ -72,6 +88,19 @@ export class AuthService {
     // Update lastLogin
     await this.usersService.update(user.id, { lastLogin: new Date() });
     const { password, twoFactorSecret, ...result } = user;
+
+    // Publish event: auth.user.authenticated
+    await this.natsJetStreamService.publishEvent<UserAuthenticatedData>(
+      AUTH_SUBJECTS.USER_AUTHENTICATED,
+      {
+        userId: user.id,
+        email: user.email,
+        authMethod: isTwoFactorPassed ? '2fa' : 'password',
+        isTwoFactorPassed,
+      },
+      { userId: user.id },
+    );
+
     return {
       accessToken,
       refreshToken,
@@ -105,6 +134,16 @@ export class AuthService {
         accessTokenPayload.exp,
       );
     }
+
+    // Publish event: auth.user.logout
+    await this.natsJetStreamService.publishEvent<UserLogoutData>(
+      AUTH_SUBJECTS.USER_LOGOUT,
+      {
+        userId,
+        reason: 'User explicitly logged out',
+      },
+      { userId },
+    );
 
     return { message: 'Logged out successfully' };
   }

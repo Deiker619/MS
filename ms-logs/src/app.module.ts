@@ -5,6 +5,7 @@ import { join } from 'path';
 import configuration from './config/configuration';
 import { LogsModule } from './logs/logs.module';
 import { Log } from './logs/entities/log.entity';
+import { NatsJetStreamConsumerModule } from './common/nats/nats-jetstream-consumer.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { Log } from './logs/entities/log.entity';
       },
     }),
     LogsModule,
+    NatsJetStreamConsumerModule,
   ],
 })
 export class AppModule {}

@@ -1,0 +1,13 @@
+{
+  "name": "@app/events",
+  "version": "1.0.0",
+  "description": "Shared Domain Event Contracts for Microservices Architecture",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

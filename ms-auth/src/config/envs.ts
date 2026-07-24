@@ -20,4 +20,6 @@ export const envSchema = joi.object({
   JWT_REFRESH_EXPIRES: joi.string().default('7d'),
 
   APP_SECRET: joi.string().required(), // Used for AES-256 encryption (2FA secret)
+
+  NATS_URL: joi.string().default('nats://localhost:4222'),
 });

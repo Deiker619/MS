@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fintech_api_gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - API_PREFIX=api
+      - API_VERSION=1
+      - JWT_SECRET=super-secret-fintech-jwt-key-change-in-production
+      - API_KEY_HEADER=x-api-key
+      - GATEWAY_API_KEY=fintech-gateway-secret-key
+      - THROTTLE_TTL=60000
+      - THROTTLE_LIMIT=100
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - LOGS_SERVICE_URL=http://logs-service:3002
+      - PROXY_TIMEOUT_MS=10000
+    networks:
+      - fintech_net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health/liveness"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  fintech_net:
+    driver: bridge
