@@ -65,7 +65,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@CurrentUser() user: User) {
-    const { password, twoFactorSecret, ...result } = user as any;
+    const { password, twoFactorSecret, jti, exp, ...result } = user as any;
     return result;
   }
 

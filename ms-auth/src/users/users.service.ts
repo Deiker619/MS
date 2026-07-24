@@ -43,6 +43,7 @@ export class UsersService {
   async update(id: string, updateData: Partial<User>): Promise<User> {
     const user = await this.findById(id);
     Object.assign(user, updateData);
-    return this.userRepository.save(user);
+    const { password, twoFactorSecret, ...result } = await this.userRepository.save(user);
+    return result;
   }
 }

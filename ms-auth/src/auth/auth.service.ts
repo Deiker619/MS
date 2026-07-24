@@ -71,11 +71,11 @@ export class AuthService {
 
     // Update lastLogin
     await this.usersService.update(user.id, { lastLogin: new Date() });
-
+    const { password, twoFactorSecret, ...result } = user;
     return {
       accessToken,
       refreshToken,
-      user,
+      user: result,
     };
   }
 
