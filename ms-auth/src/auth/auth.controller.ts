@@ -11,10 +11,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import {
-  RegisterDto,
-  VerifyTwoFactorDto,
-} from './dto/auth.dto';
+import { RegisterDto, VerifyTwoFactorDto } from './dto/auth.dto';
 import { LocalAuthGuard } from '../common/guards/local-auth.guard';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../common/guards/jwt-refresh.guard';
@@ -77,7 +74,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('2fa/generate')
   async register2FA(@CurrentUser() user: User) {
-    const { otpauthUrl, secret } =
+    const { otpauthUrl, secret, base32Secret } =
       await this.twoFactorService.generateTwoFactorSecret(user.email);
     if (!otpauthUrl || !secret) {
       throw new InternalServerErrorException('Failed to generate 2FA secret');
@@ -85,12 +82,11 @@ export class AuthController {
     const qrCodeUrl =
       await this.twoFactorService.generateQrCodeDataURL(otpauthUrl);
 
-    // In a real app, you might not want to enable it immediately until they verify the first code,
-    // but for simplicity we save the secret now (it won't be required until isTwoFactorEnabled is true)
-    await this.twoFactorService.turnOnTwoFactorAuthentication(user.id, secret);
+    await this.twoFactorService.setTwoFactorSecret(user.id, secret);
 
     return {
       qrCodeUrl,
+      secret: base32Secret, // This is the plain base32 key for Google Authenticator
       message:
         'Scan the QR code with Google Authenticator and call /2fa/enable with the code to activate',
     };
@@ -116,10 +112,7 @@ export class AuthController {
       throw new UnauthorizedException('Wrong authentication code');
     }
 
-    await this.twoFactorService.turnOnTwoFactorAuthentication(
-      user.id,
-      user.twoFactorSecret,
-    );
+    await this.twoFactorService.enableTwoFactorAuthentication(user.id);
     return { message: '2FA has been enabled' };
   }
 

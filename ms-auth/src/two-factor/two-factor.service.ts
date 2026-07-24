@@ -54,6 +54,7 @@ export class TwoFactorService {
     const encryptedSecret = this.encryptSecret(secret.base32);
     return {
       secret: encryptedSecret, // we'll save this in DB
+      base32Secret: secret.base32, // plaintext secret for manual entry
       otpauthUrl: secret.otpauth_url,
     };
   }
@@ -62,12 +63,17 @@ export class TwoFactorService {
     return qrcode.toDataURL(otpAuthUrl);
   }
 
-  public async turnOnTwoFactorAuthentication(
+  public async setTwoFactorSecret(
     userId: string,
     encryptedSecret: string,
   ) {
     return this.usersService.update(userId, {
       twoFactorSecret: encryptedSecret,
+    });
+  }
+
+  public async enableTwoFactorAuthentication(userId: string) {
+    return this.usersService.update(userId, {
       isTwoFactorEnabled: true,
     });
   }
